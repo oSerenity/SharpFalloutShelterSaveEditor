@@ -57,16 +57,15 @@ namespace Fallout_Shelter_Save_Editor
                 File.WriteAllBytes(saveFileDialog.FileName, encrypt);
             }
         }
+        string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name.Split('\\')[1];//grabs id/username then splits to just grab username
         private void button3_Click(object sender, EventArgs e)
         {
-            string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-            Process.Start(@"C:\Users\" + userName.Substring(userName.LastIndexOf(@"\")) + @"\AppData\Local\Packages\BethesdaSoftworks.FalloutShelter_3275kfvn8vcwc\SystemAppData\wgs");
+            Process.Start(@"C:\Users\" + userName + @"\AppData\Local\Packages\BethesdaSoftworks.FalloutShelter_3275kfvn8vcwc\SystemAppData\wgs");
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            string userName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
-            Process.Start(@"C:\Users\" + userName.Substring(userName.LastIndexOf(@"\")) + @"\AppData\Local\FalloutShelter");
+            Process.Start(@"C:\Users\" + userName + @"\AppData\Local\FalloutShelter");
         }
     }
 }

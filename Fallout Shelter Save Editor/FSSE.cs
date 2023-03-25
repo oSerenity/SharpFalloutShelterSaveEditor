@@ -9,47 +9,21 @@ namespace Fallout_Shelter_Save_Editor
 {
     internal class FSSE
     {
-        private static readonly uint[] key = new uint[] { 2815074099, 1725469378, 4039046167, 874293617, 3063605751, 3133984764, 4097598161, 3620741625 };
-        private static readonly byte[] iv = HexStringToByteArray("7475383967656A693334307438397532");
-        private static byte[] ConvertuIntArrayToByteArray(uint[] intArray)
+        private static byte[] ProvideKey()
         {
-            byte[] byteArray = new byte[intArray.Length * 4];
-            for (int i = 0; i < intArray.Length; i++)
-            {
-                byte[] temp = BitConverter.GetBytes(intArray[i]);
-                if (BitConverter.IsLittleEndian)
-                {
-                    Array.Reverse(temp);
-                }
-                Array.Copy(temp, 0, byteArray, i * 4, 4);
-            }
-            return byteArray;
+            return new byte[] { 167, 202, 159, 51, 102, 216, 146, 194, 240, 190, 244, 23, 52, 28, 169, 113, 182, 154, 233, 247, 186, 204, 207, 252, 244, 60, 98, 209, 215, 208, 33, 249 };
         }
-        static List<string> FindMatchingLines(string filePath, string searchString)
+        private static byte[] ProvideIV()
         {
-            List<string> matchingLines = new List<string>();
-            string[] lines = File.ReadAllLines(filePath);
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                if (ContainsString(lines[i], searchString))
-                {
-                    matchingLines.Add(lines[i]);
-                }
-            }
-
-            return matchingLines;
+            return new byte[] { 116, 117, 56, 57, 103, 101, 106, 105, 51, 52, 48, 116, 56, 57, 117, 50 };
         }
-        static bool ContainsString(string text, string searchString)
-        {
-            return text.Contains(searchString);
-        }
-        private static byte[] DecryptAes(byte[] cipherBytes, uint[] key, byte[] iv)
+        private static byte[] DecryptAes(byte[] cipherBytes)
         {
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Key = ConvertuIntArrayToByteArray(key);
-                aesAlg.IV = iv;
+
+                aesAlg.Key = ProvideKey();
+                aesAlg.IV = ProvideIV();
                 aesAlg.Mode = CipherMode.CBC;
                 aesAlg.Padding = PaddingMode.PKCS7;
 
@@ -80,8 +54,8 @@ namespace Fallout_Shelter_Save_Editor
 
                 using (var aes = new AesCryptoServiceProvider())
                 {
-                    aes.Key = ConvertuIntArrayToByteArray(key);
-                    aes.IV = iv;
+                    aes.Key = ProvideKey();
+                    aes.IV = ProvideIV();
                     aes.Padding = PaddingMode.PKCS7;
                     aes.Mode = CipherMode.CBC;
 
@@ -97,17 +71,14 @@ namespace Fallout_Shelter_Save_Editor
                 throw new Exception("File does not contain valid JSON: " + e.Message);
             }
         }
-
         public static byte[] Decrypt(string fileName)
         {
 
-            byte[] cipherBits = Convert.FromBase64String(File.ReadAllText(fileName));
-            byte[] plainBits = DecryptAes(cipherBits, key, iv);
-            string jsonStr = Encoding.UTF8.GetString(plainBits);
+            byte[] plainBits = DecryptAes(Convert.FromBase64String(File.ReadAllText(fileName)));
             string prettyJsonStr;
             try
             {
-                prettyJsonStr = JsonConvert.SerializeObject(JsonConvert.DeserializeObject(jsonStr), Newtonsoft.Json.Formatting.Indented);
+                prettyJsonStr = JsonConvert.SerializeObject(JsonConvert.DeserializeObject(Encoding.UTF8.GetString(plainBits)), Formatting.Indented);
                 return Encoding.UTF8.GetBytes(prettyJsonStr);
             }
             catch (Exception e)
@@ -118,19 +89,6 @@ namespace Fallout_Shelter_Save_Editor
 
         }
 
-        private static byte[] HexStringToByteArray(string hexString)
-        {
-            if (hexString.Length % 2 != 0)
-            {
-                throw new ArgumentException("Hex string must have an even number of characters.");
-            }
-            byte[] bytes = new byte[hexString.Length / 2];
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                bytes[i] = Convert.ToByte(hexString.Substring(i * 2, 2), 16);
-            }
-            return bytes;
-        }
 
         static List<string> SearchForBase64Files(string directoryPath)
         {
